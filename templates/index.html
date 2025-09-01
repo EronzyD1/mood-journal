@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mood Journal</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- Flutterwave Checkout -->
+  <script src="https://checkout.flutterwave.com/v3.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📝 Mood Journal</h1>
+      <p class="tag">AI-powered emotion tracking with charts</p>
+    </header>
+
+    <section class="card">
+      <h2>Your Email</h2>
+      <p class="muted">Use your email to unlock PRO after payment.</p>
+      <div class="row">
+        <input id="email" type="email" placeholder="you@example.com" />
+        <button id="saveEmail">Save</button>
+      </div>
+      <div id="emailStatus" class="muted"></div>
+    </section>
+
+    <section id="proBanner" class="card pro">
+      <div>
+        <h2>Go PRO</h2>
+        <p>Support development and unlock longer history & CSV export.</p>
+      </div>
+      <div>
+        <button id="goPro">Pay with Flutterwave</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>New Entry</h2>
+      <form id="entryForm">
+        <textarea id="entryText" rows="5" placeholder="How are you feeling today?"></textarea>
+        <div class="row">
+          <button type="submit">Analyze & Save</button>
+          <button id="exportCsv" type="button">Export CSV (PRO)</button>
+        </div>
+      </form>
+      <div id="lastResult" class="muted"></div>
+    </section>
+
+    <section class="card">
+      <h2>Mood Trend</h2>
+      <canvas id="moodTrend" height="120"></canvas>
+    </section>
+
+    <footer>
+      <small>Made with Flask • MySQL • Hugging Face • Flutterwave</small>
+    </footer>
+  </div>
+
+  <script>
+    const FLW_PUBLIC_KEY = "{{ flw_public_key }}";
+    const SUB_AMOUNT = {{ amount|int }};
+    const SUB_CURRENCY = "{{ currency }}";
+  </script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
