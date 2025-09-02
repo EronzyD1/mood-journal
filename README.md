@@ -22,7 +22,7 @@ It uses **AI (Hugging Face Sentiment Analysis)** to analyze entries, stores them
 - **Database**: SQLite (dev) / MySQL (prod)  
 - **AI**: Hugging Face Sentiment Analysis API  
 - **Payments**: Flutterwave Checkout  
-- **Deployment**: (options: Replit, Render, Hugging Face Spaces, etc.)
+- **Deployment**: Render
 
 ---
 
