@@ -265,13 +265,6 @@ def init_db():
         db.create_all()
         print("Database initialized.")
 
-@app.route("/admin/init-db")
-def admin_init_db():
-    with app.app_context():
-        db.create_all()
-    return "Database initialized.", 200
-
-
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
