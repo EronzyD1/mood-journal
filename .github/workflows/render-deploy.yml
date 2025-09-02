@@ -1,0 +1,66 @@
+name: Render Deploy + GitHub Deployment
+
+on:
+  push:
+    branches: [ "main" ]   # change if your default branch is different
+
+permissions:
+  contents: read
+  deployments: write
+  statuses: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create GitHub Deployment (pending)
+        id: gh_deploy
+        uses: bobheadxi/deployments@v1
+        with:
+          step: start
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: production
+          ref: ${{ github.sha }}
+
+      - name: Trigger Render Deploy via Deploy Hook
+        run: |
+          curl -fsSL -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
+
+      - name: Wait for app to be live (health check)
+        if: ${{ secrets.APP_URL != '' }}
+        run: |
+          set -e
+          URL="${{ secrets.APP_URL }}/health"
+          echo "Polling $URL ..."
+          for i in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || true)
+            if [ "$code" = "200" ]; then
+              echo "App is live!"
+              exit 0
+            fi
+            echo "Attempt $i/60: $code"
+            sleep 5
+          done
+          echo "Health check failed after waiting."
+          exit 1
+
+      - name: Mark Deployment successful
+        if: success()
+        uses: bobheadxi/deployments@v1
+        with:
+          step: finish
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: production
+          status: success
+          deployment_id: ${{ steps.gh_deploy.outputs.deployment_id }}
+          env_url: ${{ secrets.APP_URL }}
+
+      - name: Mark Deployment failed
+        if: failure()
+        uses: bobheadxi/deployments@v1
+        with:
+          step: finish
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: production
+          status: failure
+          deployment_id: ${{ steps.gh_deploy.outputs.deployment_id }}
