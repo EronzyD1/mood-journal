@@ -18,6 +18,11 @@ app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
 
+# --- Ensure tables exist at process start (works with Gunicorn on Render) ---
+with app.app_context():
+    db.create_all()
+
+
 HF_API_URL = "https://api-inference.huggingface.co/models/{}"
 
 # ---------- Helpers ----------
@@ -265,11 +270,6 @@ def init_db():
         db.create_all()
         print("Database initialized.")
 
-@app.route("/admin/init-db")
-def admin_init_db():
-    with app.app_context():
-        db.create_all()
-    return "Database initialized.", 200
 
 if __name__ == "__main__":
     with app.app_context():
