@@ -85,6 +85,9 @@ def index():
         currency=app.config["SUBSCRIPTION_CURRENCY"],
     )
 
+@app.route("/health")
+def health():
+    return "ok", 200
 
 @app.route("/entry", methods=["POST"])
 def add_entry():
