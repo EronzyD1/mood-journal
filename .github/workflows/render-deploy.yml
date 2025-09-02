@@ -1,8 +1,9 @@
-name: Render Deploy + GitHub Deployment
+name: Render Deploy + GitHub Deployment (simple, debug)
 
 on:
   push:
-    branches: [ "main" ]   # change if your default branch is different
+    branches: [ "main" ]   # change if your default branch isn't main
+  workflow_dispatch:        # allows manual run
 
 permissions:
   contents: read
@@ -13,6 +14,20 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Show inputs/secrets presence (debug)
+        run: |
+          echo "Branch: $GITHUB_REF"
+          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK }}" ]; then
+            echo "ERROR: RENDER_DEPLOY_HOOK secret is NOT set."; exit 1
+          else
+            echo "OK: RENDER_DEPLOY_HOOK is set."
+          fi
+          if [ -z "${{ secrets.APP_URL }}" ]; then
+            echo "Note: APP_URL not set (that's OK; no health link will be added)."
+          else
+            echo "OK: APP_URL is set."
+          fi
+
       - name: Create GitHub Deployment (pending)
         id: gh_deploy
         uses: bobheadxi/deployments@v1
@@ -23,26 +38,20 @@ jobs:
           ref: ${{ github.sha }}
 
       - name: Trigger Render Deploy via Deploy Hook
-        run: |
-          curl -fsSL -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
-
-      - name: Wait for app to be live (health check)
-        if: ${{ secrets.APP_URL != '' }}
+        id: trigger
         run: |
           set -e
-          URL="${{ secrets.APP_URL }}/health"
-          echo "Polling $URL ..."
-          for i in $(seq 1 60); do
-            code=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || true)
-            if [ "$code" = "200" ]; then
-              echo "App is live!"
-              exit 0
-            fi
-            echo "Attempt $i/60: $code"
-            sleep 5
-          done
-          echo "Health check failed after waiting."
-          exit 1
+          echo "Calling Render Deploy Hook..."
+          # Show HTTP status & body for debugging (but not the secret)
+          http_code=$(curl -s -o resp.txt -w "%{http_code}" -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}")
+          echo "Render responded with HTTP $http_code"
+          echo "--- Response body ---"
+          cat resp.txt || true
+          echo "---------------------"
+          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
+            echo "ERROR: Render hook returned non-2xx."
+            exit 1
+          fi
 
       - name: Mark Deployment successful
         if: success()
